@@ -8,6 +8,7 @@ import com.digdes.school.utils.Operators;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class Filter {
 
@@ -42,7 +43,8 @@ public class Filter {
             for (Map<String, Object> oneRow : data) {
                 Object valueToCompare = oneRow.get(oneConditionEntry.getKey());
                 Object conditionToCompare = oneConditionEntry.getValue();
-                boolean comparison = checkCondition(valueToCompare, conditionToCompare, operator.get(indexOfOperator));
+                boolean comparison = Objects.isNull(valueToCompare) || checkCondition(
+                        valueToCompare, conditionToCompare, operator.get(indexOfOperator));
                 if (comparison) {
                     resultBuf.add(oneRow);
                 }

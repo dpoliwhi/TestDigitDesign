@@ -38,17 +38,21 @@ public class WhereHandler extends GenericClass {
     }
 
     protected Map.Entry<String, Object> prepareEachCondition(String value) throws Exception {
-        List<String> valueToInsert = Arrays
+        List<String> oneCondition = Arrays
                 .stream(value.split("!=|>=|<=|=|>|<|ilike|like"))
                 .map(String::trim)
                 .toList();
-        if (valueToInsert.size() != 2) {
+        if (oneCondition.size() != 2) {
             throw new RequestDataException("Incorrect condition. " +
                     "Conditions should have format like: 'column_name' >= 'condition'");
         }
-        checkPresenceOfQuotes(valueToInsert.get(0));
-        String columnName = deleteQuotes(valueToInsert.get(0));
-        Object preparedValue = convertValueManager(valueToInsert);
+        if (oneCondition.get(1).equals("null")) {
+            throw new RequestDataException("Incorrect condition. " +
+                    "Conditions can't be null");
+        }
+        checkPresenceOfQuotes(oneCondition.get(0));
+        String columnName = deleteQuotes(oneCondition.get(0));
+        Object preparedValue = convertValueManager(oneCondition);
         return new AbstractMap.SimpleEntry<>(columnName, preparedValue);
     }
 

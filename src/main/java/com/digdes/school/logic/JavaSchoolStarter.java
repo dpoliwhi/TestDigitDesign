@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-
 public class JavaSchoolStarter {
 
     private final String INSERT = "insert ";
@@ -28,7 +27,6 @@ public class JavaSchoolStarter {
         whereHandler = new WhereHandler();
     }
 
-    // TODO потом удалить
     public List<Map<String, Object>> getData() {
         return data;
     }
@@ -43,8 +41,8 @@ public class JavaSchoolStarter {
             insertData(request.substring(INSERT.length()).trim());
         } else if (request.toLowerCase().startsWith(UPDATE)) {
             updateData(request.substring(UPDATE.length()).trim());
-        } else if (request.startsWith(SELECT)) {
-
+        } else if (request.toLowerCase().startsWith(SELECT)) {
+            return selectData(request.substring(SELECT.length()).trim());
         } else if (request.toLowerCase().startsWith(DELETE)) {
             deleteData(request.substring(DELETE.length()).trim());
         } else {
@@ -59,11 +57,10 @@ public class JavaSchoolStarter {
             throw new RequestTaskException("Incorrect task request. " +
                     "Enumeration of values to insert should start with \"VALUES\"");
         }
-        data.add(valuesHandler.prepareListOfValues(
-                request
-                        .substring(VALUES.length())
-                        .trim()
-        ));
+        Map<String, Object> oneRowToAdd = valuesHandler
+                .prepareListOfValues(request.substring(VALUES.length()).trim());
+        valuesHandler.deleteNullValues(oneRowToAdd);
+        data.add(oneRowToAdd);
     }
 
     private void updateData(String request) throws Exception {
@@ -84,6 +81,7 @@ public class JavaSchoolStarter {
             data.removeAll(filteredData);
             for (Map<String, Object> oneRow : filteredData) {
                 oneRow.putAll(dataToUpdate);
+                valuesHandler.deleteNullValues(oneRow);
             }
             data.addAll(filteredData);
         } else {
@@ -95,7 +93,7 @@ public class JavaSchoolStarter {
 
     private void deleteData(String request) throws Exception {
         if (request.toLowerCase().startsWith(VALUES)) {
-            throw new RequestTaskException("Incorrect task request. Delete task don't use with \"VALUES\"");
+            throw new RequestTaskException("Incorrect task request. DELETE task don't use with \"VALUES\"");
         }
         if (request.toLowerCase().startsWith(WHERE)) {
             ConditionsWrapper conditionsWrapper = whereHandler
@@ -110,4 +108,20 @@ public class JavaSchoolStarter {
         }
     }
 
+    private List<Map<String, Object>> selectData(String request) throws Exception {
+        if (request.toLowerCase().startsWith(VALUES)) {
+            throw new RequestTaskException("Incorrect task request. SELECT task don't use with \"VALUES\"");
+        }
+        if (request.toLowerCase().startsWith(WHERE)) {
+            ConditionsWrapper conditionsWrapper = whereHandler
+                    .prepareListOfConditions(request
+                            .substring(WHERE.length())
+                            .trim());
+
+            Filter filter = new Filter(conditionsWrapper, data);
+            return filter.filterRunner();
+        } else {
+            return data;
+        }
+    }
 }

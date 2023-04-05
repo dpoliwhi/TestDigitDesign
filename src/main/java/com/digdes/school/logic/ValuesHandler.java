@@ -8,11 +8,10 @@ public class ValuesHandler extends GenericClass {
 
     protected Map<String, Object> parseValues(String request, int startIdx, int endIdx) throws Exception {
         if (endIdx == -1) endIdx = request.length();
-        return prepareListOfValues(
-                request
-                        .toLowerCase()
-                        .substring(startIdx, endIdx)
-                        .trim()
+        return prepareListOfValues(request
+                .toLowerCase()
+                .substring(startIdx, endIdx)
+                .trim()
         );
     }
 
@@ -24,11 +23,12 @@ public class ValuesHandler extends GenericClass {
         if (listOfValues.stream().allMatch(String::isBlank)) {
             throw new RequestDataException("Incorrect data to insert. All values in one row cannot be empty");
         }
-//        System.out.println(listOfValues);
         Map<String, Object> rowDataToInsert = new HashMap<>();
         for (String s : listOfValues) {
             Map.Entry<String, Object> entry = prepareEachValue(s);
-            rowDataToInsert.put(entry.getKey(), entry.getValue());
+            if (!Objects.isNull(entry)) {
+                rowDataToInsert.put(entry.getKey(), entry.getValue());
+            }
         }
         return rowDataToInsert;
     }
@@ -44,7 +44,15 @@ public class ValuesHandler extends GenericClass {
         }
         checkPresenceOfQuotes(valueToInsert.get(0));
         String columnName = deleteQuotes(valueToInsert.get(0)).toLowerCase();
+        if (valueToInsert.get(1).equals("null")) return new AbstractMap.SimpleEntry<>(columnName, null);
         Object preparedValue = convertValueManager(valueToInsert);
         return new AbstractMap.SimpleEntry<>(columnName, preparedValue);
+    }
+
+    protected void deleteNullValues(Map<String, Object> row) throws RequestDataException {
+        row.values().removeIf(Objects::isNull);
+        if (row.isEmpty()) {
+            throw new RequestDataException("Incorrect data to insert. All values in one row cannot be empty");
+        }
     }
 }
